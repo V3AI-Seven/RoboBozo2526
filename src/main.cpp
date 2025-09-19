@@ -19,7 +19,8 @@ Motor right_motor(2); //true for reversed motor
  * All other competition modes are blocked by initialize; it is recommended
  * to keep execution time for this mode under a few seconds.
  */
-void initialize() {
+void initialize() { 
+// Motor initalization
   left_motor.set_brake_mode(MOTOR_BRAKE_HOLD);
   right_motor.set_brake_mode(MOTOR_BRAKE_HOLD);
 
