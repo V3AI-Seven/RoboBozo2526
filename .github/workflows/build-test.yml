@@ -1,4 +1,4 @@
-name: PROS Build
+name: PROS Build (Apt on 24.04)
 
 on:
   push:
@@ -7,35 +7,26 @@ on:
     branches: [ "main" ]
 
 jobs:
-  test-build:
-    runs-on: ubuntu-22.04
+  build:
+    runs-on: ubuntu-24.04
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
-
       - name: Install PROS CLI
         run: |
           python -m pip install --upgrade pip
           python -m pip install --user "pros-cli>=3.5,<4"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           pros --version
-
       - name: Install ARM GCC toolchain
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            gcc-arm-none-eabi \
-            binutils-arm-none-eabi \
-            libnewlib-arm-none-eabi
-          arm-none-eabi-g++ --version
-
-      - name: Build project
+          sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi libnewlib-arm-none-eabi
+          arm-none-eabi-ld --version
+      - name: Build
         run: pros make
