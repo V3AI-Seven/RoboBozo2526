@@ -6,13 +6,15 @@ Controller controller(E_CONTROLLER_MASTER);
 Motor left_motor(11);
 Motor right_motor(20);
 Motor intake_motor(1);
+Motor elastic_motor_1(19);
+Motor elastic_motor_2(2);
 Motor belt_motor(10);
-Motor pusher_motor(2);
+//Motor pusher_motor(2);
 
 MotorGroup left_drive({11});
 MotorGroup right_drive({20});
 
-Imu imu(9);
+Imu imu(18);
 
 lemlib::Drivetrain drivetrain(
     &left_drive, &right_drive,
@@ -90,8 +92,14 @@ void initialize() {
   intake_motor.set_reversed(true);
   belt_motor.set_reversed(true);
 
-  pusher_motor.set_brake_mode(MOTOR_BRAKE_HOLD);
-  pusher_motor.set_encoder_units(MOTOR_ENCODER_DEGREES);
+  //pusher_motor.set_brake_mode(MOTOR_BRAKE_HOLD);
+  //pusher_motor.set_encoder_units(MOTOR_ENCODER_DEGREES);
+
+  elastic_motor_1.set_brake_mode(MOTOR_BRAKE_HOLD);
+  elastic_motor_2.set_brake_mode(MOTOR_BRAKE_HOLD);
+
+  elastic_motor_1.set_reversed(true);
+
 
   chassis.calibrate();
 }
@@ -210,15 +218,16 @@ void autonomous() { // Autonomous section
  */
 void opcontrol() { //Operator control section
 	double drive_mult = 0.7;
-	bool pusher_extended = false;
+	int elastic_drive_speed = 127;
+	//bool pusher_extended = false;
 	while (true) {
 		int forward = controller.get_analog(ANALOG_LEFT_Y);    // Forward/backward movement
 		int turn = controller.get_analog(ANALOG_LEFT_X);       // Left/right turning
 		
-	// intake r1
-	// belt r2
-	// inverse for reverse modes	
-		
+		// intake r1
+		// belt r2
+		// inverse for reverse modes	
+		 
 		// drive direction toggle
 		if (controller.get_digital(E_CONTROLLER_DIGITAL_A)) {
 			drive_mult = -drive_mult;
@@ -226,33 +235,28 @@ void opcontrol() { //Operator control section
 		
 		// intake control
 		if (controller.get_digital(E_CONTROLLER_DIGITAL_R1)) {
-			intake_motor.move(127); //make intake intake
+			intake_motor.move(elastic_drive_speed); //make intake intake
+			elastic_motor_1.move(elastic_drive_speed);
 		} else if (controller.get_digital(E_CONTROLLER_DIGITAL_L1))
 		{
-			intake_motor.move(-127); //run intake in reverse
+			intake_motor.move(-elastic_drive_speed); //run intake in reverse
+			elastic_motor_1.move(-elastic_drive_speed);
+
 		} else {
-			intake_motor.move(0); // stop intake
-		}
+			intake_motor.move(0); // stop intake`
+			elastic_motor_1.move(0);
+			}
 
 		// belt control
 		if (controller.get_digital(E_CONTROLLER_DIGITAL_R2)) {
-			belt_motor.move(90); // make belt run up
-		} else if (controller.get_digital(E_CONTROLLER_DIGITAL_L2)){
-			belt_motor.move(-127); //make belt run down
+			elastic_motor_2.move(-elastic_drive_speed); // make middle part of block mover go
+		} else {elastic_motor_2.move(0);}
+		if (controller.get_digital(E_CONTROLLER_DIGITAL_L2)){
+			belt_motor.move(-75); //make belt run down
 		} else {
 			belt_motor.move(0); // stop belt
 		}
 
-		if (controller.get_digital(E_CONTROLLER_DIGITAL_B)) {
-			if (!pusher_extended) {
-				pusher_motor.move_relative(145,100);
-				pusher_extended = true;
-			} else {
-				pusher_motor.move_relative(-145,100);
-				pusher_extended = false;
-			}
-			delay(20); //debounce delay
-		}
 
 		// Calculate motor speeds for tank drive
 		int left_speed = forward + turn;   // Left motor: forward + turn
